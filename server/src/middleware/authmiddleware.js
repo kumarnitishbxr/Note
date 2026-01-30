@@ -1,47 +1,48 @@
 import jwt from "jsonwebtoken";
 import redisClient from "../config/redis.js";
-import User from "../models/User.js";
 
-const protect = async (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
   try {
+    // ✅ COOKIE SE TOKEN LO
     const token = req.cookies?.token;
-    console.log("COOKIES:", req.cookies);
-
 
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Not authorized, no token"
+        message: "Unauthorized: No token"
       });
     }
 
-    // 🔒 check blacklist
-    const isBlocked = await redisClient.get(`token:${token}`);
-    if (isBlocked) {
-      return res.status(401).json({
-        success: false,
-        message: "Session expired, please login again"
-      });
+    // ✅ REDIS BLACKLIST CHECK
+    if (redisClient?.isOpen) {
+      const isBlocked = await redisClient.get(`token:${token}`);
+      if (isBlocked) {
+        return res.status(401).json({
+          success: false,
+          message: "Session expired"
+        });
+      }
     }
 
+    // ✅ JWT VERIFY
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
 
-    req.user = await User.findById(decoded.id).select("-password");
+    // ✅ USER INFO ATTACH
+    req.user = {
+      id: decoded.id,
+      email: decoded.email
+    };
 
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: "User not found"
-      });
-    }
-
+    // ✅ VERY IMPORTANT
     next();
+
   } catch (error) {
+    console.error("AUTH ERROR:", error.message);
     return res.status(401).json({
       success: false,
-      message: "Not authorized"
+      message: "Unauthorized"
     });
   }
 };
 
-export default protect;
+export default authMiddleware;

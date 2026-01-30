@@ -6,14 +6,13 @@ import {
   getNotes
 } from "../Controllers/notecontroller.js";
 
-import protect from "../middleware/authmiddleware.js";
-
+import authMiddleware from '../middleware/authmiddleware.js'
 const noteRouter = express.Router();
 
 // 🔐 All routes protected
-noteRouter.post("/create", protect, createNote);
-noteRouter.get("/fetch",  getNotes);
-noteRouter.put("/edit/:id", protect, updateNote);
-noteRouter.delete("/delete/:id", protect, deleteNote);
+noteRouter.post("/create", authMiddleware, createNote);
+noteRouter.get("/fetch", authMiddleware,  getNotes);
+noteRouter.put("/edit/:id", authMiddleware, updateNote);
+noteRouter.delete("/delete/:id", authMiddleware, deleteNote);
 
 export default noteRouter;
