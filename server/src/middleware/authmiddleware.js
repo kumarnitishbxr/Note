@@ -1,47 +1,29 @@
 import jwt from "jsonwebtoken";
-import redisClient from "../config/redis.js";
+import redisClient from "../config/redis";
 
 const authMiddleware = async (req, res, next) => {
   try {
-    // ✅ COOKIE SE TOKEN LO
     const token = req.cookies?.token;
 
     if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized: No token"
-      });
+      return res.status(401).json({ message: "No token" });
     }
 
-    // ✅ REDIS BLACKLIST CHECK
+    // Redis blacklist check
     if (redisClient?.isOpen) {
-      const isBlocked = await redisClient.get(`token:${token}`);
-      if (isBlocked) {
-        return res.status(401).json({
-          success: false,
-          message: "Session expired"
-        });
+      const blocked = await redisClient.get(`token:${token}`);
+      if (blocked) {
+        return res.status(401).json({ message: "Session expired" });
       }
     }
 
-    // ✅ JWT VERIFY
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    req.user = decoded;
 
-    // ✅ USER INFO ATTACH
-    req.user = {
-      id: decoded.id,
-      email: decoded.email
-    };
+    next(); // 🔥 VERY IMPORTANT
 
-    // ✅ VERY IMPORTANT
-    next();
-
-  } catch (error) {
-    console.error("AUTH ERROR:", error.message);
-    return res.status(401).json({
-      success: false,
-      message: "Unauthorized"
-    });
+  } catch (err) {
+    return res.status(401).json({ message: "Unauthorized" });
   }
 };
 
