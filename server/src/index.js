@@ -75,7 +75,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser());
-app.options("*", cors());
+// app.options("*", cors());
 
 app.use('/api/auth', authRouter);
 app.use('/notes', noteRouter);
