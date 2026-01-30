@@ -10,10 +10,29 @@ import cors from 'cors'
 const app = express();
 
 
-app.use(cors({
-   origin: process.env.CLIENT_URL,
-   credentials: true
-}))
+
+const allowedOrigins = [
+  "https://notepadpro.netlify.app", // production URL
+  "https://697cb3347995cb25de431347--heroic-salmiakki-d44f4a.netlify.app" // preview URL
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
+
+// app.use(cors({
+//    origin: process.env.CLIENT_URL,
+//    credentials: true
+// }))
 
 app.use(express.json())
 app.use(cookieParser())
