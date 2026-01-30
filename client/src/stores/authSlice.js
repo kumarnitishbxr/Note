@@ -97,10 +97,11 @@ const authSlice = createSlice({
         })
         .addCase(loginUser.rejected, (state, action) => {
             state.loading = false;
-            state.error = action?.payload?.response?.data || 'Something went wrong';
+            state.error = action.payload?.message || action.payload || 'Something went wrong';
             state.isAuthenticated = false;
             state.user = null;
         })
+
     
         // Logout User Cases
         .addCase(logoutUser.pending, (state) => {
@@ -115,10 +116,11 @@ const authSlice = createSlice({
         })
         .addCase(logoutUser.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.payload?.response?.message || 'Something went wrong';
+            state.error = action.payload || 'Something went wrong';
             state.isAuthenticated = false;
             state.user = null;
         });
+
     }
 });
 
