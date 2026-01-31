@@ -1,28 +1,27 @@
 import jwt from "jsonwebtoken";
-import redisClient from "../config/redis.js";
+import User from "../models/User.js";
 
 const authMiddleware = async (req, res, next) => {
   try {
-    const token = req.cookies?.token;
+    const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
 
     if (!token) {
-      return res.status(401).json({ message: "No token" });
-    }
-
-    if (redisClient?.isOpen) {
-      const blocked = await redisClient.get(`token:${token}`);
-      if (blocked) {
-        return res.status(401).json({ message: "Session expired" });
-      }
+      return res.status(401).json({ message: "No token, authorization denied" });
     }
 
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
-    req.user = decoded;
 
-    next(); 
+    const user = await User.findById(decoded.id).select("-password");
 
-  } catch (err) {
-    return res.status(401).json({ message: "Unauthorized" });
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    req.user = user;
+    next();
+
+  } catch (error) {
+    res.status(401).json({ message: "Invalid token" });
   }
 };
 
