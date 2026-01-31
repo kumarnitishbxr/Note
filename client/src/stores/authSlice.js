@@ -92,9 +92,10 @@ const authSlice = createSlice({
         })
         .addCase(loginUser.fulfilled, (state, action) => {
             state.loading = false;
-            state.isAuthenticated = !!action.payload;
-            state.user = action.payload;
+            state.isAuthenticated = true;
+            state.user = action.payload.user || action.payload; 
         })
+
         .addCase(loginUser.rejected, (state, action) => {
             state.loading = false;
             state.error = action.payload?.message || action.payload || 'Something went wrong';
